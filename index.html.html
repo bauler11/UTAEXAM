@@ -1,0 +1,377 @@
+<html><head><base href="https://examresults.websim.edu/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resultados do Teste de Matemática - Universidade Tecnológica de Aeronáutica</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    h1, h2 {
+        color: #005a9c;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    .approved {
+        color: green;
+        font-weight: bold;
+    }
+    .rejected {
+        color: red;
+    }
+    .top-score {
+        background-color: #90EE90;
+    }
+    #summary {
+        background-color: #f0f0f0;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    #search {
+        margin-bottom: 20px;
+    }
+    #search input {
+        width: 300px;
+        padding: 5px;
+    }
+    #pagination {
+        text-align: center;
+        margin-top: 20px;
+    }
+    #pagination button {
+        margin: 0 5px;
+    }
+    #allCandidates {
+        display: none;
+        background-color: #f0f0f0;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    #candidatesList {
+        columns: 3;
+        -webkit-columns: 3;
+        -moz-columns: 3;
+    }
+    #toggleCandidates {
+        background-color: #005a9c;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+    #toggleCandidates:hover {
+        background-color: #004a7c;
+    }
+    #downloadPDF {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+    #downloadPDF:hover {
+        background-color: #45a049;
+    }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <h1>Resultados do Teste de Matemática - Universidade Tecnológica de Aeronáutica</h1>
+    
+    <div id="summary">
+        <h2>Informações Gerais</h2>
+        <p>Total de Candidatos: <span id="totalCandidates"></span></p>
+        <p>Aprovados: <span id="approvedCount"></span> (Notas de 14 a 20)</p>
+        <p>Reprovados: <span id="rejectedCount"></span> (Notas de 0 a 13)</p>
+        <h3>Distribuição por País:</h3>
+        <ul>
+            <li>Angola: 69 candidatos</li>
+            <li>Brasil: 40 candidatos</li>
+            <li>Cabo Verde: 87 candidatos</li>
+            <li>Guiné-Bissau: 92 candidatos</li>
+            <li>São Tomé e Príncipe: 103 candidatos</li>
+        </ul>
+    </div>
+
+    <button id="showAngolaResults">Mostrar Resultados de Angola</button>
+    <button id="toggleCandidates">Mostrar/Ocultar Lista de Candidatos</button>
+    <div id="allCandidates">
+        <h2>Lista Completa de Candidatos</h2>
+        <button id="downloadPDF">Baixar PDF</button>
+        <ul id="candidatesList"></ul>
+    </div>
+
+    <div id="search">
+        <input type="text" id="searchInput" placeholder="Buscar por nome, país ou curso...">
+    </div>
+
+    <table id="resultsTable">
+        <thead>
+            <tr>
+                <th>Nº de Ordem</th>
+                <th>Nome Completo</th>
+                <th>Nota</th>
+                <th>País de Origem</th>
+                <th>Curso</th>
+                <th>Universidade</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <div id="pagination">
+        <button id="prevPage">Anterior</button>
+        <span id="currentPage">1</span> de <span id="totalPages">1</span>
+        <button id="nextPage">Próximo</button>
+    </div>
+
+    <script>
+        let allStudents = [
+            {order: "001", name: "Abrantes Joaquim Silva Costa", country: "Brasil", course: "Engenharia de Computação", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "002", name: "Aguiar Maria Fernanda Costa", country: "Brasil", course: "Engenharia Mecânica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "003", name: "Albuquerque Carlos Eduardo Mendes", country: "Brasil", course: "Ciência da Computação", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "004", name: "Almeida Ana Beatriz Santos", country: "Brasil", course: "Engenharia Aeronáutica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "005", name: "Amaral José Francisco Oliveira", country: "Angola", course: "Engenharia Eletrônica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "006", name: "Bairo Fábio", country: "Angola", course: "Engenharia Civil", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "007", name: "Bernardo da Silva", country: "Angola", course: "Ciência da Computação", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "008", name: "Braz Elton", country: "Guiné-Bissau", course: "Engenharia Aeroespacial", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "009", name: "Camões Soraia", country: "Angola", course: "Engenharia de Produção", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "010", name: "Carla Beatriz Sousa", country: "Brasil", course: "Engenharia Aeroespacial", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "011", name: "César Dias", country: "Moçambique", course: "Engenharia Eletrônica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "012", name: "Dester Sintia", country: "Cabo Verde", course: "Engenharia Química", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "013", name: "Diana Pires", country: "Angola", course: "Engenharia Civil", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "014", name: "Diva Monique", country: "Brasil", course: "Engenharia de Computação", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "015", name: "Eduardo Ivan", country: "Guiné-Bissau", course: "Engenharia Química", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "016", name: "Elias Mário", country: "Moçambique", course: "Engenharia Aeroespacial", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "017", name: "Estela Joana", country: "Brasil", course: "Engenharia Mecânica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "018", name: "Felipe Almeida", country: "Angola", course: "Engenharia Eletrônica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "019", name: "Florentino Pedro", country: "Moçambique", course: "Ciência da Computação", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "020", name: "Francisco Lima", country: "São Tomé e Príncipe", course: "Engenharia Civil", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "021", name: "Guilherme Sousa", country: "Brasil", course: "Engenharia Aeroespacial", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "022", name: "Helena Almeida", country: "Angola", course: "Engenharia Mecânica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "023", name: "Isabel Carlos Soares Abílio", country: "Angola", course: "Engenharia Aeroespacial", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "024", name: "James Silva", country: "Moçambique", course: "Engenharia de Produção", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "025", name: "Jonas António", country: "Guiné-Bissau", course: "Engenharia Química", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "026", name: "Jonathan José", country: "Brasil", course: "Engenharia Aeroespacial", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "027", name: "Katia Pereira", country: "Cabo Verde", course: "Engenharia Civil", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "028", name: "Lúcia da Silva", country: "Brasil", course: "Engenharia Aeronáutica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "029", name: "Márcia Cristina dos Santos", country: "Brasil", course: "Engenharia Eletrônica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "030", name: "Matias Álvaro", country: "Moçambique", course: "Engenharia Mecânica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "031", name: "Miguel Freitas", country: "Angola", course: "Ciência da Computação", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "032", name: "Mimi Lopes", country: "Cabo Verde", course: "Engenharia de Produção", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "033", name: "Natan Dias", country: "Brasil", course: "Engenharia Química", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "034", name: "Nelson Edison", country: "Guiné-Bissau", course: "Engenharia Civil", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "035", name: "Nicolas Ferreira", country: "Moçambique", course: "Engenharia Aeronáutica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "036", name: "Nicole Grande", country: "Angola", course: "Engenharia de Estudo", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "037", name: "Patrícia Santos", country: "Brasil", course: "Engenharia de Aeroespacial", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "038", name: "Renato Gomes", country: "Moçambique", course: "Engenharia Mecânica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "039", name: "Rogério Maia", country: "Angola", course: "Engenharia de Computação", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "040", name: "Sofia Tavares", country: "Guiné-Bissau", course: "Ciência da Computação", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "041", name: "Tatiana Veloso", country: "São Tomé e Príncipe", course: "Engenharia Civil", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "042", name: "Vera Alvarado", country: "Brasil", course: "Engenharia Química", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "043", name: "Wilson Fiandeiro", country: "Cabo Verde", course: "Engenharia Eletrônica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "044", name: "Zulu Amelia Nkosi Themba", country: "Moçambique", course: "Engenharia Eletrônica", university: "Universidade Tecnológica de Aeronáutica"},
+            {order: "045", name: "Aline Martins", country: "Brasil", course: "Engenharia Civil", university: "Universidade Tecnológica de Aeronáutica"},
+            // Add remaining names up to 345
+        ];
+
+        const countryDistribution = {
+            "Angola": 69,
+            "Brasil": 40,
+            "Cabo Verde": 87,
+            "Guiné-Bissau": 92,
+            "São Tomé e Príncipe": 103,
+            "Moçambique": 0
+        };
+
+        const approvedCounts = {
+            "Angola": 2,
+            "Brasil": 8,
+            "Cabo Verde": 11,
+            "Guiné-Bissau": 5,
+            "São Tomé e Príncipe": 8
+        };
+
+        allStudents.forEach((student, index) => {
+            student.order = (index + 1).toString().padStart(3, '0');
+            let cumulative = 0;
+            for (const [country, count] of Object.entries(countryDistribution)) {
+                cumulative += count;
+                if (index < cumulative) {
+                    student.country = country;
+                    break;
+                }
+            }
+            student.status = "Reprovado";
+            student.score = Math.floor(Math.random() * 14);
+        });
+
+        const isabelIndex = allStudents.findIndex(student => student.name === "Isabel Carlos Soares Abílio");
+        if (isabelIndex !== -1) {
+            allStudents[isabelIndex].score = 19;
+            allStudents[isabelIndex].status = "Aprovado";
+            approvedCounts["Angola"]--;
+        }
+
+        for (const [country, approvedCount] of Object.entries(approvedCounts)) {
+            const countryStudents = allStudents.filter(student => student.country === country && student.status === "Reprovado");
+            const shuffled = countryStudents.sort(() => 0.5 - Math.random());
+            shuffled.slice(0, approvedCount).forEach(student => {
+                student.status = "Aprovado";
+                student.score = Math.floor(Math.random() * (20 - 14)) + 14;
+            });
+        }
+
+        function displayAngolaResults() {
+            const angolaStudents = allStudents.filter(student => student.country === "Angola");
+            displayStudents(angolaStudents);
+        }
+
+        const rowsPerPage = 20;
+        let currentPage = 1;
+
+        function displayStudents(students) {
+            const tableBody = document.querySelector("#resultsTable tbody");
+            tableBody.innerHTML = "";
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const paginatedStudents = students.slice(start, end);
+
+            paginatedStudents.forEach(student => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${student.order}</td>
+                    <td>${student.name}</td>
+                    <td>${student.score}</td>
+                    <td>${student.country}</td>
+                    <td>${student.course}</td>
+                    <td>${student.university}</td>
+                    <td class="${student.status === 'Aprovado' ? 'approved' : 'rejected'}">${student.status}</td>
+                `;
+                if (student.score === 19) {
+                    row.classList.add("top-score");
+                }
+                tableBody.appendChild(row);
+            });
+
+            updateSummary();
+            updatePaginationControls();
+        }
+
+        function updateSummary() {
+            const totalCandidates = allStudents.length;
+            const approvedCount = allStudents.filter(s => s.status === "Aprovado").length;
+            const rejectedCount = totalCandidates - approvedCount;
+
+            document.getElementById("totalCandidates").textContent = totalCandidates;
+            document.getElementById("approvedCount").textContent = approvedCount;
+            document.getElementById("rejectedCount").textContent = rejectedCount;
+
+            const countryList = document.querySelector("#summary ul");
+            countryList.innerHTML = '';
+            for (const [country, count] of Object.entries(countryDistribution)) {
+                const li = document.createElement('li');
+                li.textContent = `${country}: ${count} candidatos`;
+                countryList.appendChild(li);
+            }
+        }
+
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(allStudents.length / rowsPerPage);
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = totalPages;
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = currentPage === totalPages;
+        }
+
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                displayStudents(allStudents);
+            }
+        });
+
+        document.getElementById('nextPage').addEventListener('click', () => {
+            const totalPages = Math.ceil(allStudents.length / rowsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayStudents(allStudents);
+            }
+        });
+
+        function populateCandidatesList() {
+            const candidatesList = document.getElementById('candidatesList');
+            candidatesList.innerHTML = '';
+            allStudents.forEach(student => {
+                const li = document.createElement('li');
+                li.textContent = student.name;
+                candidatesList.appendChild(li);
+            });
+        }
+
+        document.getElementById('toggleCandidates').addEventListener('click', function() {
+            const allCandidates = document.getElementById('allCandidates');
+            if (allCandidates.style.display === 'none') {
+                allCandidates.style.display = 'block';
+                this.textContent = 'Ocultar Lista de Candidatos';
+            } else {
+                allCandidates.style.display = 'none';
+                this.textContent = 'Mostrar Lista de Candidatos';
+            }
+        });
+
+        document.getElementById('showAngolaResults').addEventListener('click', displayAngolaResults);
+
+        document.getElementById('downloadPDF').addEventListener('click', function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.text("Resultados do Teste de Matemática - Universidade Tecnológica de Aeronáutica", 10, 10);
+            
+            let yPos = 20;
+            allStudents.forEach((student, index) => {
+                if (yPos > 280) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                doc.text(`${student.order}. ${student.name} - ${student.country} - ${student.score} - ${student.status}`, 10, yPos);
+                yPos += 7;
+            });
+            
+            doc.save("resultados_teste_matematica.pdf");
+        });
+
+        updateSummary();
+        populateCandidatesList();
+        displayStudents(allStudents);
+    </script>
+</body>
+</html>
